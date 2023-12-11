@@ -71,13 +71,13 @@ body {
   width: 40px;
 }
 .notes_area .components .edit {
-  background: url(miscellaneous/edit.svg) no-repeat center transparent;
+  background: url(./miscellaneous/edit.svg) no-repeat center transparent;
 }
 .notes_area .components .delete {
-  background: url(miscellaneous/delete.svg) no-repeat center transparent;
+  background: url(./miscellaneous/delete.svg) no-repeat center transparent;
 }
 .notes_area .components .share {
-  background: url(miscellaneous/share.svg) no-repeat center transparent;
+  background: url(./miscellaneous/share.svg) no-repeat center transparent;
 }
 .notes_area .components .edit:hover::after,
 .notes_area .components .delete:hover::after,
