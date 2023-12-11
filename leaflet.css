@@ -1,0 +1,153 @@
+body {
+  padding: 20px;
+  height: 150vh;
+}
+.header {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.header #map {
+  height: 100%;
+  cursor: pointer;
+  border-radius: 10px;
+}
+.header .form_container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.header form {
+  height: 100%;
+  max-width: 600px;
+  width: 100%;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+}
+#submit,
+#clear {
+  color: white;
+  margin-top: 20px;
+  transition: filter 0.155s;
+}
+#submit {
+  background-color: hsl(158, 100%, 34%);
+}
+#submit:hover,
+#clear:hover {
+  filter: brightness(1.15);
+}
+#clear {
+  background-color: hsl(48, 62%, 60%);
+}
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+/* NOTES AREA */
+.notes_area {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto;
+  gap: 10px;
+}
+.notes_area .notes_container {
+  display: flex;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.notes_area .components {
+  display: flex;
+  flex-direction: column;
+}
+.notes_area .components button {
+  border: transparent;
+  height: 40px;
+  width: 40px;
+}
+.notes_area .components .edit {
+  background: url(miscellaneous/edit.svg) no-repeat center transparent;
+}
+.notes_area .components .delete {
+  background: url(miscellaneous/delete.svg) no-repeat center transparent;
+}
+.notes_area .components .share {
+  background: url(miscellaneous/share.svg) no-repeat center transparent;
+}
+.notes_area .components .edit:hover::after,
+.notes_area .components .delete:hover::after,
+.notes_area .components .share:hover::after {
+  display: block;
+  position: absolute;
+  border-radius: 10px;
+  background-color: #fff;
+  padding: 5px;
+  border: 1px solid #ccc;
+  margin-top: -20px;
+  margin-left: -65px;
+}
+.notes_area .components .edit:hover::after {
+  content: 'Edit';
+}
+.notes_area .components .delete:hover::after {
+  content: 'Delete';
+}
+.notes_area .components .share:hover::after {
+  content: 'Share';
+}
+.notes_area .notes {
+  line-height: 1.5;
+  flex: 1;
+  word-wrap: break-word;
+  border-radius: 10px;
+}
+.notes_area .notes p {
+  padding: 0;
+  margin: 0;
+  font-size: 0.5rem;
+}
+/* SEARCH BOX */
+.group {
+  display: flex;
+  line-height: 28px;
+  align-items: center;
+  position: relative;
+  max-width: 100%;
+  margin-bottom: 20px;
+}
+.search_box {
+  width: 100%;
+  height: 40px;
+  line-height: 28px;
+  padding: 0 1rem;
+  padding-left: 2.5rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  outline: none;
+  background-color: #f3f3f4;
+  color: #0d0c22;
+  transition: 0.3s ease;
+}
+.search_box::placeholder {
+  color: #9e9ea7;
+}
+.search_box:focus,
+.search_box:hover {
+  outline: none;
+  border-color: hsl(158, 100%, 34%);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(93, 245, 182, 0.1);
+}
+.icon {
+  position: absolute;
+  left: 1rem;
+  fill: #9e9ea7;
+  width: 1rem;
+  height: 1rem;
+}
+/* OTHERS */
