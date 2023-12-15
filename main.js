@@ -1,17 +1,39 @@
 import { components } from './components.js'
 
-const nameInput = document.getElementById('name'),
+let nameInput = document.getElementById('name'),
   dateInput = document.getElementById('date'),
   timeInput = document.getElementById('time'),
   locationInput = document.getElementById('location'),
+  cancel = document.getElementById('cancel'),
+  searchInput = document.getElementById('searchInput'),
   notesInput = document.getElementById('notes'),
   notes_area = document.querySelector('.notes_area'),
   submit = document.getElementById('submit'),
-  array_keys = JSON.parse(localStorage.getItem('array_keys')) || []
+  new_array_key
 
 let markerSet = false
+let keyOnSubmit
 
-document.getElementById('clear').addEventListener('click', () => {
+function filterNotes(searchQuery) {
+  const notesContainers = document.querySelectorAll('.notes_container')
+
+  notesContainers.forEach(note => {
+    const notesText = note.innerText.toLowerCase()
+    const isVisible = notesText.includes(searchQuery.toLowerCase())
+
+    note.style.display = isVisible ? 'flex' : 'none'
+  })
+}
+
+// Add an event listener for the search input
+searchInput.addEventListener('input', e => {
+  const searchQuery = e.target.value.trim()
+  filterNotes(searchQuery)
+})
+
+document.getElementById('clear').addEventListener('click', clear)
+
+function clear() {
   nameInput.value = ''
   dateInput.value = ''
   timeInput.value = ''
@@ -23,17 +45,17 @@ document.getElementById('clear').addEventListener('click', () => {
     map.removeLayer(circle)
     markerSet = false
   }
-})
+}
 
 function getLocalStorage() {
-  return array_keys.map(key => JSON.parse(localStorage.getItem(key)))
+  return getCurrentArrayKeys().map(key => JSON.parse(localStorage.getItem(key)))
 }
 
 function createFromLocalStorage() {
   const dataObjects = getLocalStorage()
 
   dataObjects.forEach(data => {
-    const notes = createNote(data, false)
+    const notes = createNote(data, 'old')
     notes_area.appendChild(notes)
   })
 }
@@ -41,28 +63,26 @@ function createFromLocalStorage() {
 createFromLocalStorage()
 
 function createObj() {
-  return {
-    key: generateKey(),
+  return JSON.stringify({
     name: nameInput.value || '',
     date: dateInput.value || '',
     time: timeInput.value || '',
     location: locationInput.value,
     notes: notesInput.value || '',
-  }
+  })
 }
 
-function createNote(data, newNote) {
+function createNote(data, status) {
   const notes_container = document.createElement('div')
   notes_container.classList.add('notes_container')
 
-  if (newNote) {
-    notes_container.setAttribute('data-key', array_keys[array_keys.length - 1])
-  } else {
-    const setKey = array_keys.find(key => {
+  if (status === 'new') {
+    notes_container.setAttribute('data-key', new_array_key)
+  } else if (status === 'old') {
+    const setKey = getCurrentArrayKeys().find(key => {
       const storedData = JSON.parse(localStorage.getItem(key))
       return JSON.stringify(storedData) === JSON.stringify(data)
     })
-
     if (setKey) {
       notes_container.setAttribute('data-key', setKey)
     }
@@ -85,26 +105,38 @@ function createNote(data, newNote) {
 
 function generateKey() {
   const unique_key = `${Date.now()}_${Math.floor(Math.random() * 1000)}`
-  array_keys.push(unique_key)
+  new_array_key = unique_key
   return unique_key
 }
 
 function setLocalStorage() {
-  const data = createObj()
-  const data_serialized = JSON.stringify(data)
+  let unique_key = generateKey()
+  localStorage.setItem(unique_key, createObj())
 
-  localStorage.setItem(data.key, data_serialized)
-  localStorage.setItem('array_keys', JSON.stringify(array_keys))
+  let local = JSON.parse(localStorage.getItem('array_keys')) || []
+  let newLocal = local.concat(unique_key)
+  localStorage.setItem('array_keys', JSON.stringify(newLocal))
 
-  const notes = createNote(data, true)
+  const notes = createNote(JSON.parse(createObj()), 'new')
   notes_area.appendChild(notes)
+}
+
+function submitStyle() {
+  submit.value = 'Submit'
+  submit.style = 'background-color: hsl(158, 100%, 34%);'
 }
 
 submit.addEventListener('click', e => {
   e.preventDefault()
 
   if (document.forms[0].checkValidity()) {
-    if (markerSet) {
+    if (submit.value === 'Save') {
+      submitStyle()
+      cancel.style.display = 'none'
+
+      localStorage.setItem(keyOnSubmit, createObj())
+      location.reload()
+    } else if (markerSet && submit.value !== 'Save') {
       setLocalStorage()
     } else {
       alert('Please select a location on the map first.')
@@ -114,27 +146,72 @@ submit.addEventListener('click', e => {
   }
 })
 
+function getSpecificKey(key) {
+  return JSON.parse(localStorage.getItem(key))
+}
+
+cancel.addEventListener('click', e => {
+  cancel.style.display = 'none'
+
+  submitStyle()
+})
+
+function editFn(dataKey) {
+  cancel.style.display = 'block'
+
+  document.body.scrollIntoView({ behavior: 'smooth' })
+  submit.value = 'Save'
+  submit.style = 'background-color: blue'
+
+  keyOnSubmit = dataKey
+  const dataObject = getSpecificKey(dataKey)
+
+  nameInput.value = dataObject.name
+  dateInput.value = dataObject.date
+  timeInput.value = dataObject.time
+  locationInput.value = dataObject.location
+  notesInput.value = dataObject.notes
+
+  const [lat, lng] = dataObject.location.split(', ')
+
+  addMarkerAndCircle(
+    lat.replace(/Lat: |Lng: /g, ''),
+    lng.replace(/Lat: |Lng: /g, '')
+  )
+}
+
 document.addEventListener('click', e => {
-  if (e.target.classList.contains('edit')) {
-  }
+  let classList = e.target.classList
+  let note = e.target.closest('.notes_container')
+  let dataKey = note.getAttribute('data-key')
 
-  if (e.target.classList.contains('delete')) {
-    const notes_container = e.target.closest('.notes_container')
-    const dataKey = notes_container.getAttribute('data-key')
-
-    localStorage.removeItem(dataKey)
-    notes_container.remove()
-
-    const updatedArray = currentArrayKeys().filter(key => key !== dataKey)
-    localStorage.setItem('array_keys', JSON.stringify(updatedArray))
-  }
-
-  if (e.target.classList.contains('share')) {
+  if (classList.contains('edit')) {
+    editFn(dataKey)
+  } else if (classList.contains('delete')) {
+    deleteFn(note, dataKey)
+  } else if (classList.contains('share')) {
+    shareFn()
   }
 })
 
-function currentArrayKeys() {
-  return JSON.parse(localStorage.getItem('array_keys'))
+function shareFn() {
+  const dataToShare = getCurrentArrayKeys()
+  const encodedData = encodeURIComponent(dataToShare)
+  const shareableLink = `${window.location.href}?data=${encodedData}`
+
+  alert(`Share this link: ${shareableLink}`)
+}
+
+function getCurrentArrayKeys() {
+  return JSON.parse(localStorage.getItem('array_keys')) || []
+}
+
+function deleteFn(note, dataKey) {
+  let updatedKeys = getCurrentArrayKeys().filter(key => key !== dataKey)
+  localStorage.setItem('array_keys', JSON.stringify(updatedKeys))
+
+  localStorage.removeItem(dataKey)
+  note.remove()
 }
 
 // LEAFLET

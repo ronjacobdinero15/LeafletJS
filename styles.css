@@ -28,20 +28,26 @@ body {
   flex-direction: column;
 }
 #submit,
-#clear {
+#clear,
+#cancel {
   color: white;
   margin-top: 20px;
   transition: filter 0.155s;
 }
+#submit:hover,
+#clear:hover,
+#cancel:hover {
+  filter: brightness(1.15);
+}
 #submit {
   background-color: hsl(158, 100%, 34%);
 }
-#submit:hover,
-#clear:hover {
-  filter: brightness(1.15);
-}
 #clear {
   background-color: hsl(48, 62%, 60%);
+}
+#cancel {
+  display: none;
+  background-color: hsl(0, 62%, 60%);
 }
 .buttons {
   display: flex;
@@ -73,6 +79,9 @@ body {
 .notes_area .components .edit {
   background: url(./miscellaneous/edit.svg) no-repeat center transparent;
 }
+/* .notes_area .components .edit.checked {
+  background: url(./miscellaneous/done.svg) no-repeat center transparent;
+} */
 .notes_area .components .delete {
   background: url(./miscellaneous/delete.svg) no-repeat center transparent;
 }
@@ -120,7 +129,7 @@ body {
   max-width: 100%;
   margin-bottom: 20px;
 }
-.search_box {
+#searchInput {
   width: 100%;
   height: 40px;
   line-height: 28px;
@@ -133,11 +142,11 @@ body {
   color: #0d0c22;
   transition: 0.3s ease;
 }
-.search_box::placeholder {
+#searchInput::placeholder {
   color: #9e9ea7;
 }
-.search_box:focus,
-.search_box:hover {
+#searchInput:focus,
+#searchInput:hover {
   outline: none;
   border-color: hsl(158, 100%, 34%);
   background-color: #fff;
@@ -150,4 +159,26 @@ body {
   width: 1rem;
   height: 1rem;
 }
-/* OTHERS */
+/* MEDIA QUERIES */
+@media screen and (max-width: 480px) {
+  .notes_area {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 5px;
+  }
+  .header {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .header #map {
+    height: 30vh;
+  }
+}
+
+@media screen and (min-width: 481px) and (max-width: 768px) {
+  .notes_area {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
