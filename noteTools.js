@@ -1,6 +1,6 @@
-export function components() {
+export function noteTools() {
   let div = document.createElement('div')
-  div.classList.add('components')
+  div.classList.add('noteTools')
 
   for (let i = 0; i < 3; i++) {
     let button = document.createElement('button')

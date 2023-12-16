@@ -1,35 +1,18 @@
-import { components } from './components.js'
+import { noteTools } from './noteTools.js'
 
 let nameInput = document.getElementById('name'),
   dateInput = document.getElementById('date'),
   timeInput = document.getElementById('time'),
   locationInput = document.getElementById('location'),
-  cancel = document.getElementById('cancel'),
-  searchInput = document.getElementById('searchInput'),
   notesInput = document.getElementById('notes'),
-  notes_area = document.querySelector('.notes_area'),
-  submit = document.getElementById('submit'),
-  new_array_key
+  searchInput = document.getElementById('searchInput'),
+  notesArea = document.querySelector('.notesArea'),
+  submitBtn = document.getElementById('submit'),
+  cancelBtn = document.getElementById('cancel')
 
-let markerSet = false
-let keyOnSubmit
-
-function filterNotes(searchQuery) {
-  const notesContainers = document.querySelectorAll('.notes_container')
-
-  notesContainers.forEach(note => {
-    const notesText = note.innerText.toLowerCase()
-    const isVisible = notesText.includes(searchQuery.toLowerCase())
-
-    note.style.display = isVisible ? 'flex' : 'none'
-  })
-}
-
-// Add an event listener for the search input
-searchInput.addEventListener('input', e => {
-  const searchQuery = e.target.value.trim()
-  filterNotes(searchQuery)
-})
+let markerSet = false,
+  keyOnSubmit,
+  newKey
 
 document.getElementById('clear').addEventListener('click', clear)
 
@@ -47,20 +30,81 @@ function clear() {
   }
 }
 
-function getLocalStorage() {
-  return getCurrentArrayKeys().map(key => JSON.parse(localStorage.getItem(key)))
+function getSpecificKey(key) {
+  return JSON.parse(localStorage.getItem(key))
 }
 
-function createFromLocalStorage() {
-  const dataObjects = getLocalStorage()
+function getKeys() {
+  return JSON.parse(localStorage.getItem('array_keys')) || []
+}
+
+function getObjects() {
+  return getKeys().map(key => JSON.parse(localStorage.getItem(key)))
+}
+
+// DISPLAY OLD DATAS
+displayObjects()
+
+async function displayObjects() {
+  const dataObjects = await getObjects()
 
   dataObjects.forEach(data => {
     const notes = createNote(data, 'old')
-    notes_area.appendChild(notes)
+    notesArea.appendChild(notes)
   })
 }
 
-createFromLocalStorage()
+function createNote(data, status) {
+  const notesContainer = document.createElement('div')
+  notesContainer.classList.add('notesContainer')
+
+  switch (status) {
+    case 'new':
+      notesContainer.setAttribute('data-key', newKey)
+      break
+    case 'old':
+      const setKey = getKeys().find(key => {
+        const storedData = JSON.parse(localStorage.getItem(key))
+        return JSON.stringify(storedData) === JSON.stringify(data)
+      })
+      if (setKey) {
+        notesContainer.setAttribute('data-key', setKey)
+      }
+      break
+  }
+  notesContainer.appendChild(createText(data))
+  notesContainer.appendChild(noteTools())
+
+  return notesContainer
+}
+
+function createText(data) {
+  const notes = document.createElement('div')
+  notes.classList.add('notes')
+
+  for (const property in data) {
+    const p = document.createElement('p')
+    p.innerHTML = `${property}: ${data[property]}`
+    notes.appendChild(p)
+  }
+  return notes
+}
+
+// CREATE NEW DATAS
+function generateKey() {
+  newKey = `${Date.now()}_${Math.floor(Math.random() * 1000)}`
+}
+
+function setLocalStorage() {
+  generateKey()
+  localStorage.setItem(newKey, createObj())
+
+  let updatedKeys = getKeys().concat(newKey)
+  localStorage.setItem('array_keys', JSON.stringify(updatedKeys))
+
+  const notes = createNote(JSON.parse(createObj()), 'new')
+  notesArea.appendChild(notes)
+}
 
 function createObj() {
   return JSON.stringify({
@@ -72,99 +116,45 @@ function createObj() {
   })
 }
 
-function createNote(data, status) {
-  const notes_container = document.createElement('div')
-  notes_container.classList.add('notes_container')
+// SEARCH QUERY
+function filterNotes(searchQuery) {
+  const notesContainers = document.querySelectorAll('.notesContainer')
 
-  if (status === 'new') {
-    notes_container.setAttribute('data-key', new_array_key)
-  } else if (status === 'old') {
-    const setKey = getCurrentArrayKeys().find(key => {
-      const storedData = JSON.parse(localStorage.getItem(key))
-      return JSON.stringify(storedData) === JSON.stringify(data)
-    })
-    if (setKey) {
-      notes_container.setAttribute('data-key', setKey)
-    }
-  }
+  notesContainers.forEach(note => {
+    const noteText = note.innerText.toLowerCase()
+    const isVisible = noteText.includes(searchQuery.toLowerCase())
 
-  const notes = document.createElement('div')
-  notes.classList.add('notes')
-
-  for (const property in data) {
-    const p = document.createElement('p')
-    p.innerHTML = `${property}: ${data[property]}`
-    notes.appendChild(p)
-  }
-
-  notes_container.appendChild(notes)
-  notes_container.appendChild(components())
-
-  return notes_container
+    note.style.display = isVisible ? 'flex' : 'none'
+  })
 }
 
-function generateKey() {
-  const unique_key = `${Date.now()}_${Math.floor(Math.random() * 1000)}`
-  new_array_key = unique_key
-  return unique_key
-}
-
-function setLocalStorage() {
-  let unique_key = generateKey()
-  localStorage.setItem(unique_key, createObj())
-
-  let local = JSON.parse(localStorage.getItem('array_keys')) || []
-  let newLocal = local.concat(unique_key)
-  localStorage.setItem('array_keys', JSON.stringify(newLocal))
-
-  const notes = createNote(JSON.parse(createObj()), 'new')
-  notes_area.appendChild(notes)
-}
-
-function submitStyle() {
-  submit.value = 'Submit'
-  submit.style = 'background-color: hsl(158, 100%, 34%);'
-}
-
-submit.addEventListener('click', e => {
-  e.preventDefault()
-
-  if (document.forms[0].checkValidity()) {
-    if (submit.value === 'Save') {
-      submitStyle()
-      cancel.style.display = 'none'
-
-      localStorage.setItem(keyOnSubmit, createObj())
-      location.reload()
-    } else if (markerSet && submit.value !== 'Save') {
-      setLocalStorage()
-    } else {
-      alert('Please select a location on the map first.')
-    }
-  } else {
-    alert('Please fill in all required fields.')
-  }
+searchInput.addEventListener('input', e => {
+  const searchQuery = e.target.value.trim()
+  filterNotes(searchQuery)
 })
 
-function getSpecificKey(key) {
-  return JSON.parse(localStorage.getItem(key))
-}
+// EDIT, DELETE, SHARE
+try {
+  document.addEventListener('click', e => {
+    let classList = e.target.classList
+    let note = e.target.closest('.notesContainer')
+    let dataKey = note.getAttribute('data-key')
 
-cancel.addEventListener('click', e => {
-  cancel.style.display = 'none'
+    if (classList.contains('edit')) {
+      editFn(dataKey)
+    } else if (classList.contains('delete')) {
+      deleteFn(note, dataKey)
+    } else if (classList.contains('share')) {
+      shareFn()
+    }
+  })
+} catch (err) {}
 
-  submitStyle()
-})
-
-function editFn(dataKey) {
-  cancel.style.display = 'block'
-
-  document.body.scrollIntoView({ behavior: 'smooth' })
-  submit.value = 'Save'
-  submit.style = 'background-color: blue'
+async function editFn(dataKey) {
+  editModeStyles()
 
   keyOnSubmit = dataKey
-  const dataObject = getSpecificKey(dataKey)
+  const dataObject = await getSpecificKey(dataKey)
 
   nameInput.value = dataObject.name
   dateInput.value = dataObject.date
@@ -180,38 +170,53 @@ function editFn(dataKey) {
   )
 }
 
-document.addEventListener('click', e => {
-  let classList = e.target.classList
-  let note = e.target.closest('.notes_container')
-  let dataKey = note.getAttribute('data-key')
+function deleteFn(note, dataKey) {
+  let updatedKeys = getKeys().filter(key => key !== dataKey)
+  localStorage.setItem('array_keys', JSON.stringify(updatedKeys))
 
-  if (classList.contains('edit')) {
-    editFn(dataKey)
-  } else if (classList.contains('delete')) {
-    deleteFn(note, dataKey)
-  } else if (classList.contains('share')) {
-    shareFn()
-  }
-})
+  localStorage.removeItem(dataKey)
+  note.remove()
+}
 
 function shareFn() {
-  const dataToShare = getCurrentArrayKeys()
+  const dataToShare = getKeys()
   const encodedData = encodeURIComponent(dataToShare)
   const shareableLink = `${window.location.href}?data=${encodedData}`
 
   alert(`Share this link: ${shareableLink}`)
 }
 
-function getCurrentArrayKeys() {
-  return JSON.parse(localStorage.getItem('array_keys')) || []
+cancelBtn.addEventListener('click', () => {
+  initialStyles()
+})
+
+submitBtn.addEventListener('click', e => {
+  e.preventDefault()
+  if (markerSet) {
+    if (submitBtn.value === 'Save') {
+      initialStyles()
+      localStorage.setItem(keyOnSubmit, createObj())
+    } else if (submitBtn.value !== 'Save') {
+      setLocalStorage()
+    }
+  } else {
+    alert('Please select a location on the map first.')
+  }
+})
+
+// CSS STYLES
+function initialStyles() {
+  submitBtn.value = 'Submit'
+  submitBtn.style = 'background-color: hsl(158, 100%, 34%);'
+  cancelBtn.style.display = 'none'
 }
 
-function deleteFn(note, dataKey) {
-  let updatedKeys = getCurrentArrayKeys().filter(key => key !== dataKey)
-  localStorage.setItem('array_keys', JSON.stringify(updatedKeys))
+function editModeStyles() {
+  cancelBtn.style.display = 'block'
 
-  localStorage.removeItem(dataKey)
-  note.remove()
+  nameInput.scrollIntoView({ behavior: 'smooth' })
+  submitBtn.value = 'Save'
+  submitBtn.style = 'background-color: blue'
 }
 
 // LEAFLET
@@ -235,12 +240,12 @@ function addMarkerAndCircle(lat, lng, radius = 10) {
   circle = L.circle([lat, lng], { radius }).addTo(map)
 
   map.setView([lat, lng])
+  markerSet = true
 }
 
 map.on('click', function (e) {
   const { lat, lng } = e.latlng
   addMarkerAndCircle(lat, lng)
-  markerSet = true
 
   locationInput.value = `Lat: ${lat}, Lng: ${lng}`
 })
