@@ -4,7 +4,6 @@
 }
 body {
   padding: 20px;
-  zoom: 80%;
 }
 .header {
   display: grid;
@@ -163,7 +162,6 @@ body {
 @media screen and (max-width: 480px) {
   .notesArea {
     grid-template-columns: repeat(1, 1fr);
-    gap: 5px;
   }
   .header {
     display: grid;
@@ -179,6 +177,5 @@ body {
 @media screen and (min-width: 481px) and (max-width: 768px) {
   .notesArea {
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
   }
 }
